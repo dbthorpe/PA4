@@ -175,6 +175,8 @@ public class WebPages
 		mergesort(termIndex, 1);
 		System.out.println("Copies: " + count + "\n");
 		*/
+		
+		// call delete based on the string passed
 	}
 
 
