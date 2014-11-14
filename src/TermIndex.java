@@ -5,11 +5,15 @@
 
 public interface TermIndex 
 {
-    public void add(String filename, String newWord);
+    //Add a term to the TermIndex
+	public void add(String filename, String newWord);
 
-    public int size();
+    //Return number of terms, or size of termIndex data structure
+	public int size();
 
-    public void delete(String word);
+    //Remove a term from the termIndex
+	public void delete(String word);
 
-    public Term get(String word, Boolean printP);
+    //Return a term from the termIndex
+	public Term get(String word, Boolean printP);
 }
