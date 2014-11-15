@@ -197,6 +197,7 @@ public class HashTable implements TermIndex
 		{
 			Term reservedTerm = new Term("reserved");
 			table[code] = reservedTerm;
+			count --;
 		}
 		//Perform quadratic probing to find the term
 		else
@@ -209,6 +210,7 @@ public class HashTable implements TermIndex
 				{
 					Term reservedTerm = new Term("reserved");
 					table[newLocation] = reservedTerm;
+					count --;
 					return;
 				}
 			}
