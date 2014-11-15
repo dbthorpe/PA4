@@ -29,38 +29,146 @@ public class HashTable implements TermIndex
 	 */
 	public void add(String filename, String newWord) 
 	{
+		//Check for table rebuild if more than 80% full
+		if(checkRebuildTable())
+			rebuildTable();
+	
 		//create a term from the word
 		Term term = new Term(newWord);
-		
+
 		//generate a hash function for the Term word
-		int code = Math.abs(newWord.toLowerCase().hashCode());
-		
+		int code = getHashFunction(newWord);
+
 		//if the word is already in the table, increment the frequency
 		if(contains(term))
 		{
 			get(newWord, false).incFrequency(filename);
 		}
-				
+
 		//if the word is not in the table, add it
 		else
 		{
-			count++; //increment number of unique words ***Need to check for resizing***
+			//increment number of unique words and frequency for filename
+			count++; 
 			term.incFrequency(filename);
-			
-			//If nothing at hash function location, add term
-			if(table[code] == null)
+
+			//If hash function location null or reserved, add term
+			if(table[code] == null || table[code].getName().equals("reserved"))
 				table[code] = term;
-			
+
 			//If location occupied, try quadratic probing
 			else
 			{
-				//Number of probes should not exceed table size
-				int numProbes = 0;
+				int newLocation = quadraticProbe(code);
+				
+				//If new location -1, no place found
+				if(newLocation == -1)
+					System.out.println("Error, valid location for add not found.");
+				//Otherwise place term in new location
+				else
+					table[newLocation] = term;
+				
+			}
+		}
+	}
+	
+	//Probe for new location for term in table. Return new location or -1 if no available location found
+	private int quadraticProbe(int code)
+	{
+		int newLocation = 0;
+		int probe = 0;
+		int i = 1;
+		
+		while(true)
+		{
+			//Get new location to check
+			newLocation = quadraticProbe(code, i);
+			
+			//If location is free, return the int
+			if(table[newLocation] == null || table[newLocation].getName().equals("reserved"))
+			{
+				return newLocation;
+			}
+			
+			//If location is not free, increment i to try again
+			i++;
+			
+			//If number of probes (i) is greater than the table size, terminate probe 
+			if(i > arraySize)
+				return -1;
+		}
+		
+	}
+	
+	//quadratic probe to return location
+	private int quadraticProbe(int code, int i)
+	{
+		int probe = 0;
+		int newLocation = 0;
+		
+		for(int j = 1; j <= i; j++)
+		{
+			probe += j * j;
+			newLocation = (code + probe) % arraySize;
+		}
+		
+		return newLocation;
+	}
+	
+	//Generate hash code for word
+	private int getHashFunction(String word)
+	{
+		int code = word.toLowerCase().hashCode();
+		code = Math.abs(code % arraySize);
+		return code;
+	}
+	
+	//Returns true if table is >= 80% full
+	private Boolean checkRebuildTable()
+	{
+		double percentFull = (double) count/arraySize;
+		return (percentFull >= 0.8);
+	}
+	
+	//Rebuilds a larger table 
+	private void rebuildTable()
+	{
+		//New size of the array
+		arraySize = (2 * arraySize) + 1;
+		
+		//Make new array
+		Term[] newTable = new Term[arraySize];
+		
+		//Reset the count
+		count = 0;
+		
+		//Iterate through old table to get terms
+		HashTableIterator itr = new HashTableIterator(this);
+		while(itr.hasNext())
+		{
+			Term term = itr.next();
+			String word = term.getName();
+			int code = getHashFunction(word);
+			
+			//add terms to new table
+			if(newTable[code] == null)
+			{
+				newTable[code] = term;
+				count ++;
+			}
+				
+			else
+			{
+				int newLocation = quadraticProbe(code);
+				if(newLocation != -1)
+				{
+					newTable[newLocation] = term;
+					count ++;
+				}
 			}
 		}
 		
-		
-		
+		table = newTable;
 	}
 
 	//returns the number of unique words in the document (i.e., count).
@@ -68,20 +176,76 @@ public class HashTable implements TermIndex
 	{
 		return count;
 	}
-
-	public void delete(String word) 
+	
+	//Returns size of the array
+	public int getArraySize()
 	{
-		// TODO Auto-generated method stub
-		
+		return arraySize;
 	}
 
-	//returns the Term object for the word. Boolean printP not used
+	//Remove terms from the hash table 
+	public void delete(String word) 
+	{
+		//Create term object from word to delete
+		Term term = new Term(word);
+		
+		//Find where in the table it may be located
+		int code = getHashFunction(word);
+		
+		//If the first location checked contains the term, removed it
+		if(table[code].equals(term))
+		{
+			Term reservedTerm = new Term("reserved");
+			table[code] = reservedTerm;
+			count --;
+		}
+		//Perform quadratic probing to find the term
+		else
+		{
+			
+			for(int i  = 1; i <= arraySize; i++)
+			{
+				int newLocation = quadraticProbe(code, i);
+				if(table[newLocation].equals(term))
+				{
+					Term reservedTerm = new Term("reserved");
+					table[newLocation] = reservedTerm;
+					count --;
+					return;
+				}
+			}
+		}
+	}
+
+	//returns the Term object for the word. Boolean printP not used 
 	public Term get(String word, Boolean printP) 
 	{
-		// TODO Auto-generated method stub
+		//Term object for search word
+		Term findTerm = new Term(word);
+		int code = getHashFunction(word);
+		
+		//New iterator to search table
+		HashTableIterator itr = new HashTableIterator(this);
+		
+		//Look through table for the word
+		while(itr.hasNext())
+		{
+			Term term = itr.next();
+			
+			//If term has word, return it
+			if(term.equals(findTerm))
+				return term;
+		}
 		return null;
 	}
 	
+	//returns the Term object at a particular position
+	public Term get(int position)
+	{
+		return table[position];
+	}
+	
+	//Returns true if term is in the hash table
 	public boolean contains(Object other) 
 	{
 		if(other instanceof Term)

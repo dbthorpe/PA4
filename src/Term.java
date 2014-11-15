@@ -4,7 +4,6 @@
 // Class: CS200
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
 
 public class Term 

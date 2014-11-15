@@ -11,15 +11,15 @@ import java.util.Scanner;
 public class WebPages 
 {
 	//Instance variable for binary search tree of Terms
-	private BST termIndex;
+	private HashTable termIndex;
 	
 	//instance variable for the number of pages read in
 	private int pageCount;
 
 	//initializes a new index, a binary search tree of Term
-	public WebPages()
+	public WebPages(int size)
 	{
-		termIndex = new BST();
+		termIndex = new HashTable(size);
 	}
 
 	//reads in the page in filename, divides it into words as before 
@@ -89,7 +89,7 @@ public class WebPages
 			return "Error: Empty List";
 		else
 		{
-			BSTIterator itr = new BSTIterator(termIndex);
+			HashTableIterator itr = new HashTableIterator(termIndex);
 			while(itr.hasNext())
 			{
 				outputString += ((itr.next()).getName() + "\n");
@@ -161,21 +161,9 @@ public class WebPages
 	//removes terms from the index
 	public void pruneStopWords(String s)
 	{
-		/*sort on totalFrequency
-		mergesort(termIndex, 0);
-		System.out.println("Copies: " + count);
 		
-		//remove n elements from end of list
-		for(int i = 0; i < n; i++)
-		{
-			termIndex.remove(termIndex.size() - 1);
-		}
-		
-		//sort on words
-		mergesort(termIndex, 1);
-		System.out.println("Copies: " + count + "\n");
-		*/
-		
+		termIndex.delete(s);
+
 		// call delete based on the string passed
 	}
 

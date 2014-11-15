@@ -8,28 +8,40 @@ import java.util.Iterator;
 
 public class HashTableIterator implements Iterator<Term>
 {
+	Queue hashQueue = new Queue();
 	private HashTable hashTable;
 	
-	public HashTableIterator(HashTable hashTable) {
-
+	public HashTableIterator(HashTable hashTable) 
+	{
 		this.hashTable = hashTable; 
+		addToQueue();
+		
 	}
 	public boolean hasNext() 
 	{
-		// TODO Auto-generated method stub
-		return false;
+		return !hashQueue.isEmpty();
 	}
 
 	public Term next()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return hashQueue.dequeue();
 	}
 
 	public void remove() 
 	{
-		// TODO Auto-generated method stub
-		
+		//Not implemented
+		throw new UnsupportedOperationException();
+	}
+	
+	private void addToQueue()
+	{
+		for(int i = 0; i < hashTable.getArraySize(); i++)
+		{
+			if(hashTable.get(i) != null && !hashTable.get(i).getName().equals("reserved"))
+			{
+				hashQueue.enqueue(hashTable.get(i));
+			}
+		}
 	}
 
 }
