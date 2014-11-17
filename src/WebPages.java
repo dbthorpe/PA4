@@ -12,7 +12,7 @@ public class WebPages
 {
 	//Instance variable for binary search tree of Terms
 	private HashTable termIndex;
-	
+
 	//instance variable for the number of pages read in
 	private int pageCount;
 
@@ -30,7 +30,7 @@ public class WebPages
 		{
 			//increment the pageCount
 			pageCount++;
-			
+
 			//read line-by-line through the file to get words
 			Scanner readFile = new Scanner(new File(filename));
 			while(readFile.hasNextLine())
@@ -65,7 +65,7 @@ public class WebPages
 		}
 
 	}
-	
+
 	public void printDepth(String word)
 	{
 		//get term depth in binary tree
@@ -110,21 +110,21 @@ public class WebPages
 	{
 		termIndex.add(document, word);
 	}
-	
+
 	//TFIDF method
 	public double TFIDF(String document, String word)
 	{
 		//get the term for that word
 		Term term = termIndex.get(word, false);
-	
-		
+
+
 		float TF = (float) term.getTermFrequency(document);
 		//System.out.println("Word: " + word + " Document: " + document + " TF: " + TF);
 		float D = pageCount;
 		//System.out.println("Word: " + word + " Document: " + document + " D: " + D);
 		float DF = term.getDocFrequency();
 		//System.out.println("Word: " + word + " Document: " + document + " DF: " + DF);
-		
+
 		return TF * Math.log(D / DF);
 	}
 
@@ -133,35 +133,99 @@ public class WebPages
 
 		//make a new term to compare to the term index
 		Term newTerm = new Term(word);
-		
+
 		//search through term index
 		if(termIndex.contains(newTerm)){
-			
+
 			//get the listOfFileNames for that term
 			ArrayList<String> arrayList = termIndex.get(word, false).getListOfFileNames();
-			
+
 			//copy array list to string array
 			String[] stringArray = new String[arrayList.size()];
 			for(int i = 0; i < arrayList.size(); i++){
 				stringArray[i] = arrayList.get(i);
 			}
-			
+
 			//return array
 			return stringArray;
-			
+
 		}
-		
+
 		else{
 			return null;
 		}
-		
+
 	}
 
-
+	public String bestPages(String query){
+		// iterator and supporting data structures
+		HashTableIterator iter = new HashTableIterator(termIndex);
+		ArrayList<String> queryList = new ArrayList<String>();
+		ArrayList<String> docList = new ArrayList<String>();
+		ArrayList<Double> common = new ArrayList<Double>();
+		ArrayList<Double> docSpecific = new ArrayList<Double>();
+		ArrayList<Double> simList = new ArrayList<Double>();
+		//  variables needed for computation
+		int highestSim = 0;
+		double queryWeights = 0;
+		double wiq = 0;
+		double tfidf = 0;
+		// add each word in the query to the arraylist
+		Scanner q = new Scanner(query);
+		while(q.hasNext()){
+			queryList.add(q.next());
+		}
+		// traverse term index
+		while(iter.hasNext()){
+			Term temp = iter.next();
+			//check to see if term is in query
+			if(queryList.contains(temp.getName())){
+				//since term is in query calculate the queryweights
+				wiq = .5 * (1+ Math.log(pageCount/temp.getDocFrequency()));
+				queryWeights += (wiq*wiq);
+			}
+			// for each doc that contains term i
+			for(int i=0; i< temp.getDocFrequency(); i++){
+				// calculate tfidf and add to the docSpecific
+				tfidf = TFIDF(temp.getListOfFileNames().get(i), temp.getName());
+				if(!docList.contains(temp.getListOfFileNames().get(i))){
+					docList.add(temp.getListOfFileNames().get(i));
+					docSpecific.add((tfidf*tfidf));
+					// if term is also in the query, calculate common, and added to current common
+					if(queryList.contains(temp.getName()))
+						common.add(wiq*tfidf);
+				}
+				else{
+					int index = docList.indexOf(temp.getListOfFileNames().get(i));
+					docSpecific.set(index, docSpecific.get(index) + (tfidf*tfidf));
+					//if term is also in the query, calculate common, and added to current common
+					if(queryList.contains(temp.getName()))
+						common.set(index, common.get(index) + (wiq*tfidf));
+				}
+			}
+		}
+		// calculate the sim(d,q) for each document and store it
+		for(int i=0; i<docList.size(); i++){
+			double sim = common.get(i) / (Math.sqrt(docSpecific.get(i)) * Math.sqrt(queryWeights));
+			simList.add(sim);
+			// if this sim is higher than previous highestSim, change index
+			if(sim > simList.get(highestSim))
+				highestSim = i;
+			// if they are the same, set index to lexigraphically larger document
+			else if(sim == simList.get(highestSim)){
+				if(docList.get(i).compareTo(docList.get(highestSim)) > 0){
+					highestSim = i;
+				}
+			}
+		}
+		
+		// return the doc
+		return docList.get(highestSim);
+	}
 	//removes terms from the index
 	public void pruneStopWords(String s)
 	{
-		
+
 		termIndex.delete(s);
 
 		// call delete based on the string passed
