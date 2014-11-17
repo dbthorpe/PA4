@@ -67,11 +67,21 @@ public class PA4
 				webPages.pruneStopWords(stops);
 				stops = scanFile.nextLine();
 			}
-
-			scanFile.close();
-
+		
 			//print terms
 			webPages.printTerms();
+			
+			//get querys and call bestPage
+			Object[] arr;
+			String query = "";
+			while(scanFile.hasNext()){
+				query = scanFile.nextLine().toLowerCase();
+				arr = webPages.bestPages(query);
+				System.out.printf("[%s ] in %s: %.2f\n", query,arr[0],arr[1]);
+			}
+			scanFile.close();
+
+			
 
 			//run whichPages method
 			/*for(int i = 0; i < whichPagesWords.size(); i++){
