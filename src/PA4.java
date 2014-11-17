@@ -8,7 +8,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class PA4 
+public class PA4
 {
 
 	public static void main(String[] args) 
