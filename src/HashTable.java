@@ -8,6 +8,9 @@ public class HashTable implements TermIndex
 	//Size of the hashtable array
 	private int arraySize;
 	
+	//Size of previous array
+	private int oldArraySize;
+	
 	//number of unique words in the hashtable
 	private int count;
 	
@@ -20,6 +23,7 @@ public class HashTable implements TermIndex
 		this.arraySize = arraySize;
 		count = 0;
 		table = new Term[this.arraySize];
+		oldArraySize = arraySize;
 	}
 	
 	/*The add method will need to expand the size of the array and re-hash all the entries 
@@ -59,7 +63,7 @@ public class HashTable implements TermIndex
 			//If location occupied, try quadratic probing
 			else
 			{
-				int newLocation = quadraticProbe(code);
+				int newLocation = quadraticProbe(code, table);
 				
 				//If new location -1, no place found
 				if(newLocation == -1)
@@ -73,7 +77,7 @@ public class HashTable implements TermIndex
 	}
 	
 	//Probe for new location for term in table. Return new location or -1 if no available location found
-	private int quadraticProbe(int code)
+	private int quadraticProbe(int code, Term[] t)
 	{
 		int newLocation = 0;
 		int probe = 0;
@@ -85,7 +89,7 @@ public class HashTable implements TermIndex
 			newLocation = quadraticProbe(code, i);
 			
 			//If location is free, return the int
-			if(table[newLocation] == null || table[newLocation].getName().equals("reserved"))
+			if(t[newLocation] == null || t[newLocation].getName().equals("reserved"))
 			{
 				return newLocation;
 			}
@@ -106,20 +110,23 @@ public class HashTable implements TermIndex
 		int probe = 0;
 		int newLocation = 0;
 		
-		for(int j = 1; j <= i; j++)
-		{
-			probe += j * j;
-			newLocation = (code + probe) % arraySize;
-		}
-		
+		//for(int j = 1; j <= i; j++)
+		//{
+			//probe += j * j;
+			//newLocation = (code + probe) % arraySize;
+		//}
+		//New quadratic probe
+		probe = i * i;
+		newLocation = (code + probe) % arraySize;
 		return newLocation;
 	}
 	
 	//Generate hash code for word
 	private int getHashFunction(String word)
 	{
-		int code = word.toLowerCase().hashCode();
+		int code = Math.abs(word.toLowerCase().hashCode());
 		code = Math.abs(code % arraySize);
+		//System.out.println(word + ": " + code);
 		return code;
 	}
 	
@@ -134,6 +141,7 @@ public class HashTable implements TermIndex
 	private void rebuildTable()
 	{
 		//New size of the array
+		oldArraySize = arraySize;
 		arraySize = (2 * arraySize) + 1;
 		
 		//Make new array
@@ -159,7 +167,7 @@ public class HashTable implements TermIndex
 				
 			else
 			{
-				int newLocation = quadraticProbe(code);
+				int newLocation = quadraticProbe(code, newTable);
 				if(newLocation != -1)
 				{
 					newTable[newLocation] = term;
@@ -168,6 +176,7 @@ public class HashTable implements TermIndex
 			}
 		}
 		
+		oldArraySize = arraySize;
 		table = newTable;
 	}
 
@@ -182,6 +191,15 @@ public class HashTable implements TermIndex
 	{
 		return arraySize;
 	}
+	public int getOldArraySize()
+	{
+		return oldArraySize;
+	}
+	
+	public void setOldArraySize(int size)
+	{
+		oldArraySize = size;
+	}
 
 	//Remove terms from the hash table 
 	public void delete(String word) 
@@ -193,12 +211,37 @@ public class HashTable implements TermIndex
 		int code = getHashFunction(word);
 		
 		//If the first location checked contains the term, removed it
-		if(table[code].equals(term))
+		if(table[code] != null)
 		{
-			Term reservedTerm = new Term("reserved");
-			table[code] = reservedTerm;
-			count --;
+			if(table[code].equals(term))
+			{
+				Term reservedTerm = new Term("reserved");
+				table[code] = reservedTerm;
+				count --;
+			}
+			//Perform quadratic probing to find the term
+			else
+			{
+				
+				for(int i  = 1; i <= arraySize; i++)
+				{
+					int newLocation = quadraticProbe(code, i);
+					if(table[newLocation] != null)
+					{
+						if(table[newLocation].equals(term))
+						{
+							Term reservedTerm = new Term("reserved");
+							table[newLocation] = reservedTerm;
+							count --;
+							return;
+						}
+					}
+					
+				}
+			}
+			
 		}
+		
 		//Perform quadratic probing to find the term
 		else
 		{
@@ -206,15 +249,20 @@ public class HashTable implements TermIndex
 			for(int i  = 1; i <= arraySize; i++)
 			{
 				int newLocation = quadraticProbe(code, i);
-				if(table[newLocation].equals(term))
+				if(table[newLocation] != null)
 				{
-					Term reservedTerm = new Term("reserved");
-					table[newLocation] = reservedTerm;
-					count --;
-					return;
+					if(table[newLocation].equals(term))
+					{
+						Term reservedTerm = new Term("reserved");
+						table[newLocation] = reservedTerm;
+						count --;
+						return;
+					}
 				}
+				
 			}
 		}
+
 	}
 
 	//returns the Term object for the word. Boolean printP not used 
@@ -242,7 +290,10 @@ public class HashTable implements TermIndex
 	//returns the Term object at a particular position
 	public Term get(int position)
 	{
-		return table[position];
+		if((position >= 0) && (position<arraySize))
+			return table[position];
+		else
+			return null;
 	}
 	
 	//Returns true if term is in the hash table

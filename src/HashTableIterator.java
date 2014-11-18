@@ -35,7 +35,7 @@ public class HashTableIterator implements Iterator<Term>
 	
 	private void addToQueue()
 	{
-		for(int i = 0; i < hashTable.getArraySize(); i++)
+		for(int i = 0; i < hashTable.getOldArraySize(); i++)
 		{
 			if(hashTable.get(i) != null && !hashTable.get(i).getName().equals("reserved"))
 			{

@@ -6,7 +6,9 @@
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 public class PA4
 {
@@ -60,12 +62,13 @@ public class PA4
 			for(int i = 0; i < fileNames.size(); i++){
 				webPages.addPage(fileNames.get(i));
 			}
-			
-			String stops = scanFile.nextLine();
+			//***Remove***
+			//webPages.printTerms();
+			String stops = scanFile.nextLine().trim();
 			while(!stops.equals("*STOPs*"))
 			{
 				webPages.pruneStopWords(stops);
-				stops = scanFile.nextLine();
+				stops = scanFile.nextLine().trim();
 			}
 		
 			//print terms
@@ -77,7 +80,28 @@ public class PA4
 			while(scanFile.hasNext()){
 				query = scanFile.nextLine().toLowerCase();
 				arr = webPages.bestPages(query);
-				System.out.printf("[%s ] in %s: %.2f\n", query,arr[0],arr[1]);
+				
+				//Separate the words to sort alphabetically
+				StringTokenizer tokens = new StringTokenizer(query);
+				int numWords = tokens.countTokens();
+				int i = 0;
+				String[] separateWords = new String[numWords];
+				while(tokens.hasMoreTokens())
+				{
+					separateWords[i] = tokens.nextToken();
+					i++;
+				}
+				
+				Arrays.sort(separateWords);
+				String outputWords = "";
+				for(String val : separateWords)
+				{
+					outputWords += val + " ";
+				}
+				if(arr != null)
+				System.out.printf("[%s] in %s: %.2f\n", outputWords, arr[0],arr[1]);
+				else
+					System.out.printf("[%s] not found\n", outputWords);
 			}
 			scanFile.close();
 

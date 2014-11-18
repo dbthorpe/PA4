@@ -43,6 +43,7 @@ public class WebPages
 
 				//remove HTML tags from the line
 				line = stripHTML(line);
+				//line = line.replaceAll("<", " ").replaceAll(">", " ");
 
 				//delimit by everything but letters, numbers, ', and <>
 				Scanner readLine = new Scanner(line).useDelimiter("[^\\w'<>]+");
@@ -51,9 +52,9 @@ public class WebPages
 				{
 					//set the line to lowercase
 					String word = readLine.next().toLowerCase();
-
 					//add the word to the TermIndex
-					addToTermIndex(word, filename);					
+					addToTermIndex(word, filename);
+										
 
 				}
 
@@ -229,6 +230,10 @@ public class WebPages
 		
 		// array to return 2 items
 		Object[] returnArr = {docList.get(highestSim), simList.get(highestSim)};
+		
+		// no terms in query were found in the array
+		if(queryWeights == 0)
+			returnArr = null;
 		
 		// return the doc and sim
 		return returnArr;
